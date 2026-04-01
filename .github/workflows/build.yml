@@ -15,7 +15,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
+            target: x86_64-unknown-linux-musl
             ext: ""
           - os: macos-14
             target: aarch64-apple-darwin
@@ -45,7 +45,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y pkg-config libssl-dev
+          sudo apt-get install -y pkg-config musl-tools
 
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
