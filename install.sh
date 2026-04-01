@@ -7,14 +7,14 @@ REPO="samuelahmed/shellsurf-releases"
 VERSION="v0.1.0"
 INSTALL_DIR="${SHELLSURF_INSTALL_DIR:-$HOME/.local/bin}"
 
-# Detect OS and architecture
 OS="$(uname -s)"
 ARCH="$(uname -m)"
 
 case "$OS" in
-  Linux)  os="unknown-linux-gnu" ;;
-  Darwin) os="apple-darwin" ;;
-  *)      echo "Unsupported OS: $OS" >&2; exit 1 ;;
+  Linux)   os="unknown-linux-gnu" ;;
+  Darwin)  os="apple-darwin" ;;
+  MINGW*|MSYS*|CYGWIN*) os="pc-windows-msvc" ;;
+  *)       echo "Unsupported OS: $OS" >&2; exit 1 ;;
 esac
 
 case "$ARCH" in
@@ -24,43 +24,52 @@ case "$ARCH" in
 esac
 
 TARGET="${arch}-${os}"
-TARBALL="shellsurf-${VERSION}-${TARGET}.tar.gz"
-URL="https://github.com/${REPO}/releases/download/${VERSION}/${TARBALL}"
+
+if [ "$os" = "pc-windows-msvc" ]; then
+  EXT="zip"
+  BINARY="shellsurf.exe"
+else
+  EXT="tar.gz"
+  BINARY="shellsurf"
+fi
+
+ARCHIVE="shellsurf-${VERSION}-${TARGET}.${EXT}"
+URL="https://github.com/${REPO}/releases/download/${VERSION}/${ARCHIVE}"
 
 echo "Installing shellsurf ${VERSION} for ${TARGET}..."
 
-# Create install directory
 mkdir -p "$INSTALL_DIR"
 
-# Download and extract
 TMPDIR="$(mktemp -d)"
 trap 'rm -rf "$TMPDIR"' EXIT
 
 if command -v curl >/dev/null 2>&1; then
-  curl -fsSL "$URL" -o "$TMPDIR/$TARBALL"
+  curl -fsSL "$URL" -o "$TMPDIR/$ARCHIVE"
 elif command -v wget >/dev/null 2>&1; then
-  wget -q "$URL" -O "$TMPDIR/$TARBALL"
+  wget -q "$URL" -O "$TMPDIR/$ARCHIVE"
 else
   echo "Error: curl or wget required" >&2
   exit 1
 fi
 
-tar xzf "$TMPDIR/$TARBALL" -C "$TMPDIR"
-mv "$TMPDIR/shellsurf" "$INSTALL_DIR/shellsurf"
-chmod +x "$INSTALL_DIR/shellsurf"
+if [ "$EXT" = "zip" ]; then
+  unzip -q "$TMPDIR/$ARCHIVE" -d "$TMPDIR"
+else
+  tar xzf "$TMPDIR/$ARCHIVE" -C "$TMPDIR"
+fi
+
+mv "$TMPDIR/$BINARY" "$INSTALL_DIR/$BINARY"
+chmod +x "$INSTALL_DIR/$BINARY"
 
 echo ""
-echo "shellsurf installed to $INSTALL_DIR/shellsurf"
+echo "shellsurf installed to $INSTALL_DIR/$BINARY"
 
-# Check if install dir is in PATH
 case ":$PATH:" in
   *":$INSTALL_DIR:"*) ;;
   *)
     echo ""
     echo "Add to your PATH:"
     echo "  export PATH=\"$INSTALL_DIR:\$PATH\""
-    echo ""
-    echo "Or add that line to your ~/.bashrc or ~/.zshrc"
     ;;
 esac
 
