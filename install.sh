@@ -4,7 +4,7 @@
 set -e
 
 REPO="samuelahmed/shellsurf-releases"
-VERSION="v0.1.0"
+VERSION="v0.2.0"
 INSTALL_DIR="${SHELLSURF_INSTALL_DIR:-$HOME/.local/bin}"
 
 OS="$(uname -s)"
